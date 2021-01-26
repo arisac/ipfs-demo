@@ -1,0 +1,38 @@
+name: Deploy Demo
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  arisac-demo-lah:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Modules
+        run: yarn
+
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_IPFS_DEPLOY_PINATA__API_KEY: ${{ secrets.IPFS_DEPLOY_PINATA__API_KEY }}
+          envkey_IPFS_DEPLOY_PINATA__SECRET_API_KEY: ${{ secrets.IPFS_DEPLOY_PINATA__SECRET_API_KEY }}
+          envkey_IPFS_DEPLOY_CLOUDFLARE__API_TOKEN: ${{ secrets.IPFS_DEPLOY_CLOUDFLARE__API_TOKEN }}
+          envkey_IPFS_DEPLOY_CLOUDFLARE__ZONE: newton.bio
+          envkey_IPFS_DEPLOY_CLOUDFLARE__RECORD: _dnslink.ipfs-demo.newton.bio
+
+      - name: Deploy to Pinata and update Cloudflare DNS
+        run: npx ipfs-deploy -p pinata -d cloudflare -O .public
